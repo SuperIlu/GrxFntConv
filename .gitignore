@@ -1,0 +1,41 @@
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Libraries
+*.lib
+*.a
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+*.bdf
+*.psf
+*.ttf
+*.woff2
+fntconv
+cour11.fnt
+cout.c
+cout.fna
+cout.grx
+helv11.fnt
+hout.c
+hout.fna
+hout.grx
+out
+out.c
+out.fna
+out.fnt
+out.grx
