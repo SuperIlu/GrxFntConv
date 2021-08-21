@@ -25,6 +25,7 @@
 #include "libgrx.h"
 #include "grfontdv.h"
 #include "libschrift/schrift.h"
+#include "bdf.h"
 
 char *_GR_debug_file;
 int _GR_debug_line;
@@ -158,7 +159,7 @@ int ch_bitmap(int ch, int w, int h, char *buffer) {
 
 static void usage(char *prgname) {
     printf("Usage:\n");
-    printf("  %s [-cf] <infile> <size> <outfile>\n", prgname);
+    printf("  %s [-cf] <TTF or BDF file> <size> <outfile>\n", prgname);
 }
 
 int main(int argc, char *argv[]) {
@@ -168,6 +169,8 @@ int main(int argc, char *argv[]) {
     int size = 0;
     char *outfile = argv[3];
     int out_format = OUT_GRX;
+    GrFontHeader h;
+    GrFont *fnt;
 
     // check parameters
     while ((opt = getopt(argc, argv, "cf")) != -1) {
@@ -215,68 +218,68 @@ int main(int argc, char *argv[]) {
 
     // load TTF
     sft.font = sft_loadfile(name);
-    if (!sft.font) {
-        printf("Could not load %s!\n", name);
-        exit(1);
-    } else {
+    if (sft.font) {
+        printf("TTF detected\n");
         printf("Loaded %s:\n", baseName);
-    }
 
-    // extract line metrics
-    SFT_LMetrics lmetrics;
-    if (sft_lmetrics(&sft, &lmetrics) != 0) {
-        printf("Line metrics error\n");
-        exit(1);
-    }
-
-    printf("  ascender  : %f\n", lmetrics.ascender);
-    printf("  descender : %f\n", lmetrics.descender);
-    printf("  lineGap   : %f\n", lmetrics.lineGap);
-
-    // extract character min/max width
-    int minWidth = 0xFFFF;
-    int maxWidth = 0x0000;
-    for (int ch = MIN_CHAR; ch <= MAX_CHAR; ch++) {
-        SFT_GMetrics gmetrics;
-        SFT_Glyph glyph;
-        if (sft_lookup(&sft, ch, &glyph) != 0) {
-            printf("Lookup error: %d\n", ch);
-            exit(1);
-        }
-        if (sft_gmetrics(&sft, glyph, &gmetrics) != 0) {
-            printf("Metrics error: %d\n", ch);
+        // extract line metrics
+        SFT_LMetrics lmetrics;
+        if (sft_lmetrics(&sft, &lmetrics) != 0) {
+            printf("Line metrics error\n");
             exit(1);
         }
 
-        // get character sizes
-        minWidth = MIN(minWidth, (int)gmetrics.advanceWidth);
-        maxWidth = MAX(maxWidth, (int)gmetrics.advanceWidth);
-    }
+        printf("  ascender  : %f\n", lmetrics.ascender);
+        printf("  descender : %f\n", lmetrics.descender);
+        printf("  lineGap   : %f\n", lmetrics.lineGap);
 
-    printf("  minWidth : %d\n", minWidth);
-    printf("  maxWidth : %d\n", maxWidth);
+        // extract character min/max width
+        int minWidth = 0xFFFF;
+        int maxWidth = 0x0000;
+        for (int ch = MIN_CHAR; ch <= MAX_CHAR; ch++) {
+            SFT_GMetrics gmetrics;
+            SFT_Glyph glyph;
+            if (sft_lookup(&sft, ch, &glyph) != 0) {
+                printf("Lookup error: %d\n", ch);
+                exit(1);
+            }
+            if (sft_gmetrics(&sft, glyph, &gmetrics) != 0) {
+                printf("Metrics error: %d\n", ch);
+                exit(1);
+            }
 
-    // assemble header
-    GrFontHeader h;
-    h.name = name;
-    h.family = baseName;
-    h.proportional = minWidth != maxWidth;
-    h.scalable = TRUE;
-    h.preloaded = FALSE;
-    h.modified = GR_FONTCVT_NONE;
-    h.width = (minWidth + maxWidth) / 2;
-    h.height = ceil(lmetrics.ascender + lmetrics.lineGap);
-    h.baseline = ceil(lmetrics.ascender);
-    h.ulpos = round(lmetrics.ascender + lmetrics.descender);
-    h.ulheight = 1;
-    h.minchar = MIN_CHAR;
-    h.numchars = MAX_CHAR - MIN_CHAR;
-    h.encoding = GR_FONTENC_UNICODE;
+            // get character sizes
+            minWidth = MIN(minWidth, (int)gmetrics.advanceWidth);
+            maxWidth = MAX(maxWidth, (int)gmetrics.advanceWidth);
+        }
 
-    // create GrFont
-    GrFont *fnt = _GrBuildFont(&h, GR_FONTCVT_NONE, 0, 0, 0, 0, ch_width, ch_bitmap, FALSE);
+        printf("  minWidth : %d\n", minWidth);
+        printf("  maxWidth : %d\n", maxWidth);
 
-    if (!fnt) {
+        // assemble header
+        h.name = name;
+        h.family = baseName;
+        h.proportional = minWidth != maxWidth;
+        h.scalable = TRUE;
+        h.preloaded = FALSE;
+        h.modified = GR_FONTCVT_NONE;
+        h.width = (minWidth + maxWidth) / 2;
+        h.height = ceil(lmetrics.ascender + lmetrics.lineGap);
+        h.baseline = ceil(lmetrics.ascender);
+        h.ulpos = round(lmetrics.ascender + lmetrics.descender);
+        h.ulheight = 1;
+        h.minchar = MIN_CHAR;
+        h.numchars = MAX_CHAR - MIN_CHAR;
+        h.encoding = GR_FONTENC_UNICODE;
+
+        // create GrFont
+        fnt = _GrBuildFont(&h, GR_FONTCVT_NONE, 0, 0, 0, 0, ch_width, ch_bitmap, FALSE);
+    } else if (bdf_read_data(name, &h, size)) {
+        printf("BDF detected\n");
+
+        // create GrFont
+        fnt = _GrBuildFont(&h, GR_FONTCVT_NONE, 0, 0, 0, 0, bdf_width, bdf_bitmap, FALSE);
+    } else {
         printf("font building error\n");
         exit(1);
     }

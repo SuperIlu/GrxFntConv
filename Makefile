@@ -1,15 +1,16 @@
 SCHRIFT = libschrift
 
 OBJS = \
+	bdf.o \
 	fntconv.o \
 	buildfnt.o \
 	dumpfna.o \
 	dumpfont.o \
 	dumpgrx.o
 
-CFLAGS  = -Wall -O2 -I. #-DDEBUG
+CFLAGS  = -Wall -I. -O2 #-O0 -g3 -DDEBUG
 LDFLAGS = -L$(SCHRIFT)
-LIBS    = -lX11 -lschrift -lm
+LIBS    = -lschrift -lm
 
 all: libschrift fntconv
 
