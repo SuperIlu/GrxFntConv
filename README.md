@@ -12,6 +12,7 @@ I might provide pre-compiled DOS, Linux and Win32 binaries later...
 Usage:
   fntconv [-cf] <TTF or BDF file> <size> <outfile>
 ```
+Please note: the `-f` flag is only for testing purposes and `-c` generates C code to be compiled into you program. Both flags should not be used when converting fonts to be loaded from disk with Allegro or GRX. Also: both flags are quite untested!
 
 ## License
 My code and everything MGRX is licensed under GPLv2 (see LICENSE).
