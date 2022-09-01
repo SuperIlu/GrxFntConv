@@ -8,7 +8,7 @@ OBJS = \
 	dumpfont.o \
 	dumpgrx.o
 
-CFLAGS  = -Wall -I. -O2 #-O0 -g3 -DDEBUG
+CFLAGS  = -std=gnu99 -Wall -I. -O2 #-O0 -g3 -DDEBUG
 LDFLAGS = -L$(SCHRIFT)
 LIBS    = -lschrift -lm
 
